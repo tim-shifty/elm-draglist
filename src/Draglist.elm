@@ -48,7 +48,7 @@ update updateItem msg { items, dragging } =
     DragEnd xy -> case dragging of
       Nothing -> doNothing
       Just { index, position, originalPosition, siblingPositions } -> let
-        y = position.y
+        y = xy.y
         y0 = originalPosition.y
         droppedAt = indexAtWhich (\p -> y - y0 <= p) siblingPositions
         in if droppedAt < index
