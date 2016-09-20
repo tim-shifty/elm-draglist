@@ -50,7 +50,7 @@ update updateItem msg { items, dragging } =
       Just { index, position, originalPosition, siblingPositions } -> let
         y = position.y
         y0 = originalPosition.y
-        droppedAt = indexAtWhich (\p -> y - y0 < p) siblingPositions
+        droppedAt = indexAtWhich (\p -> y - y0 <= p) siblingPositions
         in if droppedAt < index
           then reorder index droppedAt -- up
           else if index < droppedAt - 1

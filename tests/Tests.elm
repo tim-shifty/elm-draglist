@@ -7,6 +7,7 @@ import String
 import List exposing (head, take, drop, length, sort, filter, map, indexedMap, repeat)
 import Mouse exposing (Position)
 import Json.Decode as Json
+import Debug exposing (log)
 
 import Draglist exposing (reposition, indexAtWhich, Dragging,
   getDragStart, const, update, init, Msg (..))
@@ -17,6 +18,8 @@ infixl 0 ===
 -- fuzzer producing natural numbers
 nat : Fuzzer Int
 nat = Fuzz.map abs int
+
+nat20 = intRange 0 20
 
 -- fuzzer randomly producing one of x :: xs
 oneOf : a -> List a -> Fuzzer a
@@ -99,8 +102,8 @@ all = describe "draglist"
                   index mids (Position mouseX mouseY))
     ]
   , describe "update"
-    [ fuzz3 nat nat nat "update moves element up"
-      <| \countBefore moveUp countAfter ->
+    [ fuzz4 nat20 nat20 nat20 int "update moves element up"
+      <| \countBefore moveUp countAfter randomY ->
         let
           totalCount = countBefore + 1 + moveUp + countAfter
           items = repeat (countBefore + moveUp) "before"
@@ -110,10 +113,12 @@ all = describe "draglist"
             ++ repeat countAfter "after"
           indexToY n = n * 10 + 5
           indexToPosition n = Position 5 <| indexToY n
-          mids = map indexToY [0..totalCount]
-          startMsg = DragStart (countBefore + moveUp) mids
-            (indexToPosition (countBefore + moveUp))
-          dragMsg = DragEnd (indexToPosition countBefore)
+          mids = map indexToY [0..totalCount-1]
+          startPosition = indexToPosition (countBefore + moveUp)
+          relativeMids = map (\y -> y - startPosition.y) mids
+          startMsg = DragStart (countBefore + moveUp) relativeMids startPosition
+          dragMsg = DragAt (Position 5 randomY)
+          endMsg = DragEnd (indexToPosition countBefore)
           (model, _) = init items
           updateItem _ m = (m,Cmd.none)
           doUpdate msg model = let
@@ -123,6 +128,7 @@ all = describe "draglist"
           actualModel = model
             |> doUpdate startMsg
             |> doUpdate dragMsg
+            |> doUpdate endMsg
         in
           expectedModel === actualModel
     ]
