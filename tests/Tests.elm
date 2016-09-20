@@ -4,11 +4,12 @@ import Test exposing (Test, describe, test, fuzz2, fuzz3, fuzz4)
 import Fuzz exposing (Fuzzer, list, int, intRange, tuple)
 import Expect
 import String
-import List exposing (head, take, drop, length, sort, filter, map, indexedMap)
+import List exposing (head, take, drop, length, sort, filter, map, indexedMap, repeat)
 import Mouse exposing (Position)
 import Json.Decode as Json
 
-import Draglist exposing (reposition, indexAtWhich, Dragging, getDragStart, const)
+import Draglist exposing (reposition, indexAtWhich, Dragging,
+  getDragStart, const, update, init, Msg (..))
 
 infixl 0 ===
 (===) a b = Expect.equal b a
@@ -79,21 +80,50 @@ all = describe "draglist"
     ]
   , describe "getDragStart"
     [ fuzz4 int int nat (list (tuple (int,nat))) "sets up Dragging correctly"
-      <| \mouseX mouseY index topsAndHeights -> let
-          childNode n (top,height) = "\"" ++ toString n ++ "\":{\"offsetTop\":"
-            ++ toString top ++ ",\"offsetHeight\":" ++toString height ++ "}"
-          mids = case head (drop index topsAndHeights) of
-            Nothing -> map (const 0) topsAndHeights
-            Just (t0,h0) -> (map (\(t,h)->t+(h+1)//2 - t0 - (h0+1)//2) topsAndHeights)
-          in
-            Json.decodeString (getDragStart index)
-              ( "{\"pageX\":" ++ toString mouseX
-              ++ ",\"pageY\":" ++ toString mouseY
-              ++ ",\"target\":{"
-                ++ "\"parentElement\":{\"id\":\"draglist\",\"childNodes\":{"
-                  ++ String.join "," (indexedMap childNode topsAndHeights)
-              ++ "}}}}" )
-            === Result.Ok (Draglist.DragStart
-              index mids (Position mouseX mouseY))
+      <| \mouseX mouseY index topsAndHeights ->
+            let
+              childNode n (top,height) = "\"" ++ toString n ++ "\":{\"offsetTop\":"
+              ++ toString top ++ ",\"offsetHeight\":" ++toString height ++ "}"
+              mids = case head (drop index topsAndHeights) of
+                Nothing -> map (const 0) topsAndHeights
+                Just (t0,h0) -> (map (\(t,h)->t+(h+1)//2 - t0 - (h0+1)//2) topsAndHeights)
+            in
+              Json.decodeString (getDragStart index)
+                ( "{\"pageX\":" ++ toString mouseX
+                ++ ",\"pageY\":" ++ toString mouseY
+                ++ ",\"target\":{"
+                  ++ "\"parentElement\":{\"id\":\"draglist\",\"childNodes\":{"
+                    ++ String.join "," (indexedMap childNode topsAndHeights)
+                    ++ "}}}}" )
+                === Result.Ok (Draglist.DragStart
+                  index mids (Position mouseX mouseY))
+    ]
+  , describe "update"
+    [ fuzz3 nat nat nat "update moves element up"
+      <| \countBefore moveUp countAfter ->
+        let
+          totalCount = countBefore + 1 + moveUp + countAfter
+          items = repeat (countBefore + moveUp) "before"
+            ++ ("this" :: repeat countAfter "after")
+          expectedItems = repeat countBefore "before"
+            ++ ("this" :: repeat moveUp "before")
+            ++ repeat countAfter "after"
+          indexToY n = n * 10 + 5
+          indexToPosition n = Position 5 <| indexToY n
+          mids = map indexToY [0..totalCount]
+          startMsg = DragStart (countBefore + moveUp) mids
+            (indexToPosition (countBefore + moveUp))
+          dragMsg = DragEnd (indexToPosition countBefore)
+          (model, _) = init items
+          updateItem _ m = (m,Cmd.none)
+          doUpdate msg model = let
+            (m, _) = update updateItem msg model
+            in m
+          (expectedModel, _) = init expectedItems
+          actualModel = model
+            |> doUpdate startMsg
+            |> doUpdate dragMsg
+        in
+          expectedModel === actualModel
     ]
   ]

@@ -11,7 +11,6 @@ import Platform.Cmd as Cmd
 import Platform.Sub as Sub
 import List exposing (indexedMap, drop, repeat, map, map2, head, take)
 import DOM exposing (target, parentElement, childNodes, offsetTop, offsetHeight)
-import Debug exposing (log)
 
 type Msg e
   = DragStart Int (List Int) Position
@@ -38,7 +37,7 @@ update updateItem msg { items, dragging } =
   let
     doNothing = (Model items Nothing, Cmd.none)
     reorder from to =
-      ( Model (log "new list" (reposition from to items)) Nothing
+      ( Model (reposition from to items) Nothing
       , Cmd.none -- change this to actually affect something
       )
   in case msg of
