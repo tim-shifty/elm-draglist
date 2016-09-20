@@ -122,7 +122,7 @@ all = describe "draglist"
           (model, _) = init items
           updateItem _ m = (m,Cmd.none)
           doUpdate msg model = let
-            (m, _) = update updateItem msg model
+            (m, _) = update updateItem (\_ _ _ -> Cmd.none) msg model
             in m
           (expectedModel, _) = init expectedItems
           actualModel = model

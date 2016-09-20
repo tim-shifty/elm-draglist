@@ -10,7 +10,7 @@ import List
 main = App.program
   { init = init <| List.map initItem ["one", "two", "three"]
   , view = view viewItem
-  , update = update updateItem
+  , update = update updateItem repositionCommand
   , subscriptions = subscriptions (const Sub.none) }
 
 type alias ItemModel =
@@ -32,3 +32,4 @@ updateItem msg model = (
     Up -> {model| number = model.number + 1}
     Down -> {model| number = model.number - 1}
   , Cmd.none)
+repositionCommand from to newList = Cmd.none

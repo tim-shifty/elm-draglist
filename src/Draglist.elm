@@ -32,14 +32,18 @@ type alias Model m =
 
 init items = (Model items Nothing, Cmd.none)
 
-update : (e -> m -> (m, Cmd e)) -> Msg e -> Model m -> ( Model m, Cmd (Msg e) )
-update updateItem msg { items, dragging } =
+update : (e -> m -> (m, Cmd e)) -> (Int -> Int -> List m -> Cmd e) -> Msg e -> Model m -> ( Model m, Cmd (Msg e) )
+update updateItem repositionCommand msg { items, dragging } =
   let
     doNothing = (Model items Nothing, Cmd.none)
     reorder from to =
-      ( Model (reposition from to items) Nothing
-      , Cmd.none -- change this to actually affect something
-      )
+      let
+        newItems = reposition from to items
+        command = repositionCommand from to newItems
+      in
+        ( Model newItems Nothing
+        , Cmd.map (ElementMsg to) command
+        )
   in case msg of
     DragStart n vs xy -> (Model items (Just (Dragging n xy xy vs)), Cmd.none)
     DragAt xy -> case dragging of
@@ -87,10 +91,9 @@ viewItemContainer viewItem dragging index item =
     [ Html.App.map (ElementMsg index) (viewItem item) ]
 
 view : (m -> Html e) -> Model m -> Html (Msg e)
-view viewItem model = div [style ["position"=>"absolute","left"=>"200px","top"=>"100px"]]
-  [ Html.h2 [] [text "Drag these elements:"]
-  , div [Html.Attributes.id "draglist"] (indexedMap (viewItemContainer viewItem model.dragging) model.items)
-  ]
+view viewItem model = div
+  [ Html.Attributes.id "draglist" ]
+  (indexedMap (viewItemContainer viewItem model.dragging) model.items)
 
 subscriptions : (m -> Sub e) -> Model m -> Sub (Msg e)
 subscriptions itemSubs model = let
