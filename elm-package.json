@@ -8,6 +8,7 @@
         "tests"
     ],
     "exposed-modules": [],
+    "native-modules": true,
     "dependencies": {
         "debois/elm-dom": "1.2.2 <= v < 2.0.0",
         "elm-community/elm-test": "2.1.0 <= v < 3.0.0",

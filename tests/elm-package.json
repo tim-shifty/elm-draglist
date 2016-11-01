@@ -7,6 +7,7 @@
         ".",
         "../src"
     ],
+    "native-modules": true,
     "exposed-modules": [],
     "dependencies": {
         "debois/elm-dom": "1.2.2 <= v < 2.0.0",

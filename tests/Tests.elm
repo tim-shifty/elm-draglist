@@ -8,9 +8,11 @@ import List exposing (head, take, drop, length, sort, filter, map, indexedMap, r
 import Mouse exposing (Position)
 import Json.Decode as Json
 import Debug exposing (log)
+import Html
 
+import RealDom exposing (render, textContent)
 import Draglist exposing (reposition, indexAtWhich, Dragging,
-  getDragStart, const, update, init, Msg (..))
+  getDragStart, const, update, init, Msg (..), view)
 
 infixl 0 ===
 (===) a b = Expect.equal b a
@@ -131,5 +133,8 @@ all = describe "draglist"
             |> doUpdate endMsg
         in
           expectedModel === actualModel
+    ]
+  , describe "view"
+    [ test "initial view" <| \() -> (textContent (render (view (\n -> (Html.text (toString n))) (Draglist.Model [1,2,3] Nothing)))) === "1 2 3"
     ]
   ]
